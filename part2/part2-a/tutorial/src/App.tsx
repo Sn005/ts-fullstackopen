@@ -1,29 +1,18 @@
-import React, { useState } from "react";
-import Hello from "./Hello";
-import AppD from "./AppD";
+import React, { FC } from "react";
+import Note, { NoteProps } from "./components/Note";
+
 import "./App.css";
 
-const Display = ({ counter }: { counter: number }) => <div>{counter}</div>;
-const Button = ({ onClick, text }: { onClick: () => void; text: string }) => (
-  <button onClick={onClick}>{text}</button>
-);
+interface AppProps {
+  notes: NoteProps[];
+}
 
-const App: React.FC = () => {
-  const name = "Peter";
-  const age = 10;
-  const [counter, setCounter] = useState(0);
-  // setTimeout(() => setCounter(counter + 1), 1000);
-  // const setToValue = (value: number) => setCounter(value);
-  const setToValue = (value: number) => () => setCounter(value);
-
+const App: FC<AppProps> = ({ notes }) => {
+  const rows = () => notes.map(note => <Note key={note.id} note={note} />);
   return (
     <div className="App">
-      <Hello name="Maya" age={26 + 10} />
-      <Hello name={name} age={age} />
-      <Display counter={counter} />
-      <Button onClick={setToValue(counter + 1)} text="plus" />
-      <Button onClick={setToValue(0)} text="zero" />
-      <AppD />
+      <h1>Notes</h1>
+      <ul>{rows()}</ul>
     </div>
   );
 };
