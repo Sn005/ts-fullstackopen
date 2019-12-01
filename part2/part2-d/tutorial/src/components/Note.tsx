@@ -1,13 +1,18 @@
-import React, { FC } from "react";
+import React, { FC, MouseEvent } from "react";
+import { Note as NoteInterface } from "../services/note/models";
 
-export interface NoteProps {
-  id: number;
-  content: string;
-  date: string;
-  important: boolean;
+interface NoteProps {
+  note: NoteInterface;
+  toggleImportance: (event: MouseEvent<HTMLButtonElement>) => void;
 }
+const Note: FC<NoteProps> = ({ note, toggleImportance }) => {
+  const label = note.important ? "make not important" : "make important";
 
-const Note: FC<{ note: NoteProps }> = ({ note }) => {
-  return <li>{note.content}</li>;
+  return (
+    <li>
+      {note.content}
+      <button onClick={toggleImportance}>{label}</button>
+    </li>
+  );
 };
 export default Note;
