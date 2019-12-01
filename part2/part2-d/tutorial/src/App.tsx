@@ -1,7 +1,7 @@
 import React, { FC, useState, useEffect, FormEvent, ChangeEvent } from "react";
 import Note from "./components/Note";
-import { Note as NoteInterface } from "./services/note/models";
-import noteService from "./services/note/api";
+import { Note as NoteInterface } from "./services/notes/models";
+import noteService from "./services/notes/api";
 
 import "./App.css";
 
