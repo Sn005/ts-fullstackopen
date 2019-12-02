@@ -1,5 +1,4 @@
 import React, { FC, ChangeEvent } from "react";
-import { Person } from "../domains/Person";
 
 interface FilterProps {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
