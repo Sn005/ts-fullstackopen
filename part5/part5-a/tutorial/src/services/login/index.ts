@@ -4,7 +4,7 @@ import { Credentials, Response } from "./model";
 
 const mockAuth = (credentials: Credentials): Promise<Response> => {
   return new Promise((resolve, reject) => {
-    if (!credentials.username && !credentials.password) {
+    if (!credentials.username || !credentials.password) {
       reject();
     }
     resolve({
