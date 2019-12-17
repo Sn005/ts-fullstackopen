@@ -5,6 +5,7 @@ import blogService from "./services/blogs";
 import { Blog as BlogInterface } from "./services/blogs/model";
 import Notification from "./components/Notification";
 import Blog from "./components/Blog";
+import Togglable, { TogglableHandler } from "./components/Togglable";
 
 const App: FC = () => {
   const [blogs, setBlogs] = useState<BlogInterface[]>([]);
@@ -15,7 +16,33 @@ const App: FC = () => {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [url, setUrl] = useState("");
-  const rows = () => blogs.map(blog => <Blog key={blog.id} blog={blog} />);
+  const updateBlog = async (blog: BlogInterface) => {
+    const newBlog = { ...blog, likes: blog.likes + 1 };
+    const updated = await blogService.update(newBlog);
+    const updatedBlogs = blogs
+      .filter(b => b.id !== blog.id)
+      .concat(updated)
+      .sort((a, b) => b.likes - a.likes);
+
+    setBlogs(updatedBlogs);
+  };
+  const removeBlog = async (blog: BlogInterface) => {
+    const option = window.confirm(`remove ${blog.title} by ${blog.author}`);
+    // if (option) {
+    //   await blogService.remove(blog.id);
+    // }
+    // setBlogs(blogs.filter(b => b.id !== blog.id));
+  };
+  const rows = () =>
+    blogs.map(blog => (
+      <Blog
+        key={blog.id}
+        blog={blog}
+        handleUpdate={() => updateBlog(blog)}
+        handleRemove={() => removeBlog(blog)}
+        showRemoveButton={true}
+      />
+    ));
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
@@ -91,7 +118,9 @@ const App: FC = () => {
       title,
       url,
       author,
-      id: blogs.length + 1
+      id: blogs.length + 1,
+      likes: 0,
+      user: {}
     };
     const result = await blogService.create(blogObject);
     console.log(result);
@@ -100,37 +129,41 @@ const App: FC = () => {
     setAuthor("");
     setUrl("");
   };
+
+  const blogFormRef = React.createRef<TogglableHandler>();
   const blogForm = () => (
-    <form onSubmit={addBlog}>
-      <div>
-        title:
-        <input
-          type="text"
-          value={title}
-          name="Title"
-          onChange={({ target }) => setTitle(target.value)}
-        />
-      </div>
-      <div>
-        author:
-        <input
-          type="text"
-          value={author}
-          name="Author"
-          onChange={({ target }) => setAuthor(target.value)}
-        />
-      </div>
-      <div>
-        URL:
-        <input
-          type="text"
-          value={url}
-          name="URL"
-          onChange={({ target }) => setUrl(target.value)}
-        />
-      </div>
-      <button type="submit">create</button>
-    </form>
+    <Togglable buttonLabel="new blog" ref={blogFormRef}>
+      <form onSubmit={addBlog}>
+        <div>
+          title:
+          <input
+            type="text"
+            value={title}
+            name="Title"
+            onChange={({ target }) => setTitle(target.value)}
+          />
+        </div>
+        <div>
+          author:
+          <input
+            type="text"
+            value={author}
+            name="Author"
+            onChange={({ target }) => setAuthor(target.value)}
+          />
+        </div>
+        <div>
+          URL:
+          <input
+            type="text"
+            value={url}
+            name="URL"
+            onChange={({ target }) => setUrl(target.value)}
+          />
+        </div>
+        <button type="submit">create</button>
+      </form>
+    </Togglable>
   );
   return (
     <div className="App">
