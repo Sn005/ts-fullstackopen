@@ -1,0 +1,6 @@
+export const types = {
+  ADD: "COUNTER/ADD",
+  DECREMENT: "COUNTER/DECREMENT",
+  INCREMENT: "COUNTER/INCREMENT",
+  RESET: "COUNTER/RESET"
+} as const;
