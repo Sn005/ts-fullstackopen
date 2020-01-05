@@ -1,8 +1,6 @@
-import { State as CounterState } from "./counter";
+import counter, { State as CounterState } from "./counter";
 
 export interface States {
   counter: CounterState;
+  // counter: ReturnType<typeof counter>;
 }
-// export const initialStates: States = {
-//   counter: domainInitialStates.counter
-// };
