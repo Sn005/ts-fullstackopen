@@ -105,7 +105,8 @@ const App: FC = () => {
     );
   };
 
-  const noteFormRef = React.createRef<TogglableHandler>();
+  // const noteFormRef = React.createRef<TogglableHandler>();
+  const noteFormRef = useRef<TogglableHandler>(null);
   const noteForm = () => (
     <Togglable buttonLabel="new note" ref={noteFormRef}>
       <NoteForm
@@ -129,9 +130,26 @@ const App: FC = () => {
     setNotes([...notes, returnedNote]);
     setNewNote("");
   };
+  function TextInputWithFocusButton() {
+    const inputEl = useRef<HTMLInputElement>(null);
+    const onButtonClick = () => {
+      // `current` points to the mounted text input element
+      if (inputEl && inputEl.current) {
+        inputEl.current.focus();
+        console.log(inputEl.current.value);
+      }
+    };
+    return (
+      <>
+        <input ref={inputEl} type="text" />
+        <button onClick={onButtonClick}>Focus the input</button>
+      </>
+    );
+  }
   return (
     <div className="App">
       <h1>Notes</h1>
+      {TextInputWithFocusButton()}
       {user === null ? (
         loginForm()
       ) : (
