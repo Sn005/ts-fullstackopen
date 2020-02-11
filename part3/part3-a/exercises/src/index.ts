@@ -1,10 +1,11 @@
 import express from "express";
+import config from "./config";
+import logger from "./logger";
 import routes from "./routes";
+import listen from "./listen";
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+config(app);
+logger(app);
 routes(app);
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+listen(app);
