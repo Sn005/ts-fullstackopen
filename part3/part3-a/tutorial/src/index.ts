@@ -1,6 +1,18 @@
-import express from "express";
-import bodyParser from "body-parser";
+import express, { NextFunction } from "express";
 const app = express();
+const requestLogger = (
+  request: express.Request,
+  response: express.Response,
+  next: NextFunction
+) => {
+  console.log("Method:", request.method);
+  console.log("Path:  ", request.path);
+  console.log("Body:  ", request.body);
+  console.log("---");
+  next();
+};
+
+app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -73,7 +85,14 @@ app.delete("/notes/:id", (request, response) => {
   notes = notes.filter(note => note.id !== id);
   response.status(204).end();
 });
+const unknownEndpoint = (
+  request: express.Request,
+  response: express.Response
+) => {
+  response.status(404).send({ error: "unknown endpoint" });
+};
 
+app.use(unknownEndpoint);
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
