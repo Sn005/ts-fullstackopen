@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import uniqueValidator from "mongoose-unique-validator";
 
 type PersonType = {
   name: string;
@@ -6,10 +7,11 @@ type PersonType = {
 } & Document;
 
 const personSchema: Schema = new mongoose.Schema({
-  name: String,
-  number: String
+  name: { type: String, required: true },
+  number: { type: String, required: true, unique: true }
 });
 
+personSchema.plugin(uniqueValidator);
 const Person = mongoose.model<PersonType>("person", personSchema);
 
 export default Person;

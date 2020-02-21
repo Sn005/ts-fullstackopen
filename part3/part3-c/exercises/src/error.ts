@@ -1,4 +1,4 @@
-import express, { NextFunction } from "express";
+import express, { NextFunction, json } from "express";
 import { HttpError } from "http-errors";
 
 export default (app: express.Application) => {
@@ -21,7 +21,6 @@ export default (app: express.Application) => {
     if (error.name === "CastError" && error.kind === "ObjectId") {
       return response.status(400).send({ error: "malformatted id" });
     }
-
     next(error);
   };
   app.use(errorHandler);

@@ -2,14 +2,14 @@ import express, { response } from "express";
 import Person from "./models/person";
 const routes = express.Router();
 
-routes.get("/persons", (req, res) => {
+routes.get("/persons", (request, response) => {
   Person.find({}).then(person => {
-    res.json(person.map(person => person.toJSON()));
+    response.json(person.map(person => person.toJSON()));
   });
 });
-routes.get("/info", (req, res) => {
+routes.get("/info", (request, response) => {
   Person.find({}).then(person => {
-    res.end(`Person has info for ${person.length}
+    response.end(`Person has info for ${person.length}
     ${new Date()}
       `);
   });
