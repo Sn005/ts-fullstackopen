@@ -1,0 +1,7 @@
+put http://localhost:3001/notes/5e46af5f37acb24d946e2ce7
+Content-Type: application/json
+
+{
+  "content": "updated",
+  "important": true
+}
