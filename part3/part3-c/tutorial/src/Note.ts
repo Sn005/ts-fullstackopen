@@ -20,9 +20,21 @@ mongoose
     console.log("error connecting to MongoDB:", error.message);
   });
 
-const noteSchema = new mongoose.Schema({
-  content: String,
-  date: Date,
+type NoteType = {
+  id: number;
+  content: string;
+  important: boolean;
+};
+const noteSchema = new mongoose.Schema<NoteType>({
+  content: {
+    type: String,
+    minlength: 5,
+    required: true
+  },
+  date: {
+    type: Date,
+    required: true
+  },
   important: Boolean
 });
 
@@ -34,11 +46,5 @@ noteSchema.set("toJSON", {
   }
 });
 
-type NoteType = {
-  id: number;
-  content: string;
-  important: boolean;
-} & Document;
-
-const Note = mongoose.model<NoteType>("Note", noteSchema);
+const Note = mongoose.model<NoteType & Document>("Note", noteSchema);
 export default Note;
