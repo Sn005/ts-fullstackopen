@@ -1,11 +1,11 @@
-import express from "express";
 import dotenv from "dotenv";
-import db from "./db";
+import express from "express";
 import config from "./config";
-import logger from "./logger";
-import routes from "./routes";
+import db from "./db";
 import error from "./error";
 import listen from "./listen";
+import logger from "./logger";
+import routes from "./routes";
 
 dotenv.config();
 const app = express();

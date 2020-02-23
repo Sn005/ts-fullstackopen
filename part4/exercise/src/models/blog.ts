@@ -3,7 +3,7 @@ dotenv.config();
 
 import mongoose, { Document } from "mongoose";
 
-type BlogType = {
+export type BlogType = {
   title: string;
   author: string;
   url: string;
