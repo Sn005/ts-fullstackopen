@@ -1,13 +1,14 @@
 import { Response, Request, NextFunction } from "express";
 import Note from "../models/note";
+import User from "../models/user";
 
-export const getAllNotes = (request: Request, response: Response) => {
-  Note.find({}).then(notes => {
-    response.json(notes.map(note => note.toJSON()));
-  });
+export const index = async (request: Request, response: Response) => {
+  const notes = await Note.find({}).populate("user", { username: 1, name: 1 });
+
+  response.json(notes.map(note => note.toJSON()));
 };
 
-export const getNote = (
+export const show = async (
   request: Request,
   response: Response,
   next: NextFunction
@@ -23,7 +24,7 @@ export const getNote = (
     .catch(error => next(error));
 };
 
-export const postNote = (
+export const store = async (
   request: Request,
   response: Response,
   next: NextFunction
@@ -36,22 +37,31 @@ export const postNote = (
     });
   }
 
+  const user = await User.findById(body.userId);
+  if (user === null) {
+    return response.status(400).json({
+      error: "user missing"
+    });
+  }
+
   const note = new Note({
     content: body.content,
     important: body.important || false,
-    date: new Date()
+    date: new Date(),
+    user: user._id
   });
 
-  note
-    .save()
-    .then(savedNote => savedNote.toJSON())
-    .then(savedAndFormattedNote => {
-      response.json(savedAndFormattedNote);
-    })
-    .catch(error => next(error));
+  try {
+    const savedNote = await note.save();
+    user.notes = user.notes.concat(savedNote._id);
+    await user.save();
+    response.json(savedNote.toJSON());
+  } catch (exception) {
+    next(exception);
+  }
 };
 
-export const putNote = (
+export const update = async (
   request: Request,
   response: Response,
   next: NextFunction
@@ -74,7 +84,7 @@ export const putNote = (
     .catch(error => next(error));
 };
 
-export const deleteNote = (
+export const destroy = async (
   request: Request,
   response: Response,
   next: NextFunction

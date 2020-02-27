@@ -14,7 +14,7 @@ const dbUrl =
   process.env.NODE_ENV === "test"
     ? process.env.TEST_MONGODB_URI
     : process.env.MONGODB_URI;
-db({ db:dbUrl as string });
+db({ db: dbUrl as string });
 config(app);
 logger(app);
 routes(app);

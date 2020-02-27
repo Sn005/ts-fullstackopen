@@ -1,12 +1,13 @@
 import * as dotenv from "dotenv";
-dotenv.config();
-
 import mongoose, { Document } from "mongoose";
 
-type NoteType = {
+dotenv.config();
+
+export type NoteType = {
   id: number;
   content: string;
   important: boolean;
+  user: string;
 };
 const noteSchema = new mongoose.Schema<NoteType>({
   content: {
@@ -18,7 +19,11 @@ const noteSchema = new mongoose.Schema<NoteType>({
     type: Date,
     required: true
   },
-  important: Boolean
+  important: Boolean,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  }
 });
 
 noteSchema.set("toJSON", {
