@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt");
+import bcrypt from "bcrypt";
 import { Response, Request, NextFunction } from "express";
 import User from "../models/user";
 

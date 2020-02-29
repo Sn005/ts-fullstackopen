@@ -1,4 +1,5 @@
 import { Response, Request, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 import Note from "../models/note";
 import User from "../models/user";
 
@@ -24,6 +25,17 @@ export const show = async (
     .catch(error => next(error));
 };
 
+const getTokenFrom = (request: Request) => {
+  const authorization = request.get("authorization");
+  if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
+    return authorization.substring(7);
+  }
+  return null;
+};
+
+export interface TokenInterface {
+  id: string;
+}
 export const store = async (
   request: Request,
   response: Response,
@@ -37,21 +49,29 @@ export const store = async (
     });
   }
 
-  const user = await User.findById(body.userId);
-  if (user === null) {
-    return response.status(400).json({
-      error: "user missing"
-    });
-  }
-
-  const note = new Note({
-    content: body.content,
-    important: body.important || false,
-    date: new Date(),
-    user: user._id
-  });
-
   try {
+    const token = getTokenFrom(request);
+    if (!token) {
+      return response.status(401).json({ error: "token missing or invalid" });
+    }
+    const decodedToken = jwt.verify(token, process.env.SECRET as string);
+
+    if (!(decodedToken as TokenInterface).id) {
+      return response.status(401).json({ error: "token missing or invalid" });
+    }
+    const user = await User.findById((decodedToken as TokenInterface).id);
+    if (user === null) {
+      return response.status(400).json({
+        error: "user missing"
+      });
+    }
+
+    const note = new Note({
+      content: body.content,
+      important: body.important || false,
+      date: new Date(),
+      user: user._id
+    });
     const savedNote = await note.save();
     user.notes = user.notes.concat(savedNote._id);
     await user.save();

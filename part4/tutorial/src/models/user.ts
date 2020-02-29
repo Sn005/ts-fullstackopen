@@ -8,7 +8,7 @@ dotenv.config();
 type UserType = {
   username: string;
   name: string;
-  passwordHash: boolean;
+  passwordHash: string;
   notes: NoteType[];
 };
 const userSchema = new mongoose.Schema<UserType>({
