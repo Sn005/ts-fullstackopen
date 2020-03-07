@@ -18,7 +18,7 @@
     "@types/node": "^13.7.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
-    "nodemon": "^2.0.2",
+    "Int": "^2.0.2",
     "prettier": "^1.19.1",
     "ts-node": "^8.6.2",
     "typescript": "^3.7.5"

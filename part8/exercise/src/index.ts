@@ -1,130 +1,188 @@
 import { ApolloServer, UserInputError, gql } from "apollo-server";
 import { v1 as uuid } from "uuid";
 
-type Address = {
-  street: string;
-  city: string;
-};
-type Person = {
+type Author = {
   name: string;
-  phone?: string;
-  address: Address;
   id: string;
+  born?: number;
 };
-let persons: Person[] = [
+let authors: Author[] = [
   {
-    name: "Arto Hellas",
-    phone: "040-123543",
-    address: {
-      city: "Espoo",
-      street: "Tapiolankatu 5 A"
-    },
-    id: "3d594650-3436-11e9-bc57-8b80ba54c431"
+    name: "Robert Martin",
+    id: "afa51ab0-344d-11e9-a414-719c6709cf3e",
+    born: 1952
   },
   {
-    name: "Matti Luukkainen",
-    phone: "040-432342",
-    address: {
-      street: "Malminkaari 10 A",
-      city: "Helsinki"
-    },
-    id: "3d599470-3436-11e9-bc57-8b80ba54c431"
+    name: "Martin Fowler",
+    id: "afa5b6f0-344d-11e9-a414-719c6709cf3e",
+    born: 1963
   },
   {
-    name: "Venla Ruuska",
-    address: {
-      street: "Nallemäentie 22 C",
-      city: "Helsinki"
-    },
-    id: "3d599471-3436-11e9-bc57-8b80ba54c431"
+    name: "Fyodor Dostoevsky",
+    id: "afa5b6f1-344d-11e9-a414-719c6709cf3e",
+    born: 1821
+  },
+  {
+    name: "Joshua Kerievsky", // birthyear not known
+    id: "afa5b6f2-344d-11e9-a414-719c6709cf3e"
+  },
+  {
+    name: "Sandi Metz", // birthyear not known
+    id: "afa5b6f3-344d-11e9-a414-719c6709cf3e"
+  }
+];
+
+type Book = {
+  title: string;
+  published: number;
+  author: string;
+  id: string;
+  genres: string[];
+};
+let books: Book[] = [
+  {
+    title: "Clean Code",
+    published: 2008,
+    author: "Robert Martin",
+    id: "afa5b6f4-344d-11e9-a414-719c6709cf3e",
+    genres: ["refactoring"]
+  },
+  {
+    title: "Agile software development",
+    published: 2002,
+    author: "Robert Martin",
+    id: "afa5b6f5-344d-11e9-a414-719c6709cf3e",
+    genres: ["agile", "patterns", "design"]
+  },
+  {
+    title: "Refactoring, edition 2",
+    published: 2018,
+    author: "Martin Fowler",
+    id: "afa5de00-344d-11e9-a414-719c6709cf3e",
+    genres: ["refactoring"]
+  },
+  {
+    title: "Refactoring to patterns",
+    published: 2008,
+    author: "Joshua Kerievsky",
+    id: "afa5de01-344d-11e9-a414-719c6709cf3e",
+    genres: ["refactoring", "patterns"]
+  },
+  {
+    title: "Practical Object-Oriented Design, An Agile Primer Using Ruby",
+    published: 2012,
+    author: "Sandi Metz",
+    id: "afa5de02-344d-11e9-a414-719c6709cf3e",
+    genres: ["refactoring", "design"]
+  },
+  {
+    title: "Crime and punishment",
+    published: 1866,
+    author: "Fyodor Dostoevsky",
+    id: "afa5de03-344d-11e9-a414-719c6709cf3e",
+    genres: ["classic", "crime"]
+  },
+  {
+    title: "The Demon",
+    published: 1872,
+    author: "Fyodor Dostoevsky",
+    id: "afa5de04-344d-11e9-a414-719c6709cf3e",
+    genres: ["classic", "revolution"]
   }
 ];
 
 const typeDefs = gql`
-  enum YesNo {
-    YES
-    NO
-  }
-  type Address {
-    street: String!
-    city: String!
-  }
-  type Person {
+  type Author {
     name: String!
-    phone: String
-    address: Address!
     id: ID!
+    born: Int
+    bookCount: Int!
+  }
+  type Book {
+    title: String!
+    published: Int!
+    author: String!
+    id: ID!
+    genres: [String]
   }
 
   type Query {
-    personCount: Int!
-    allPersons(phone: YesNo): [Person!]!
-    findPerson(name: String!): Person
+    bookCount: Int!
+    authorCount: Int!
+    allBooks(author: String, genre: String): [Book!]
+    allAuthors: [Author!]
   }
+
   type Mutation {
-    addPerson(
-      name: String!
-      phone: String
-      street: String!
-      city: String!
-    ): Person
-    editNumber(name: String!, phone: String!): Person
+    addBook(
+      title: String!
+      author: String
+      published: Int!
+      genres: [String]!
+    ): Book
+    editAuthor(name: String!, setBornTo: Int!): Author
   }
 `;
 
 const resolvers = {
   Query: {
-    personCount: () => persons.length,
-    allPersons: (_: void, args: { phone: "YES" | "NO" }) => {
-      if (!args.phone) {
-        return persons;
-      }
-      const byPhone = (person: Person) =>
-        args.phone === "YES" ? person.phone : !person.phone;
-      return persons.filter(byPhone);
+    bookCount: () => authors.length,
+    authorCount: () => {
+      return [...new Set(authors.map(author => author.name))].length;
     },
-    findPerson: (_: void, args: { name: string }) =>
-      persons.find(p => p.name === args.name)
-  },
-  Person: {
-    address: (root: { street: string; city: string }) => {
-      return {
-        street: root.street,
-        city: root.city
-      };
+    allBooks: (_: void, args: { author?: string; genre?: string }) => {
+      const { author, genre } = args;
+      if (author === undefined && genre === undefined) return books;
+      const result = books
+        .filter(book => (author ? book.author === author : book))
+        .filter(book => (genre ? book.genres.includes(genre) : book));
+      return result;
+    },
+    allAuthors: () => {
+      return authors;
     }
   },
+  Author: {
+    bookCount: (root: { name: string }) =>
+      books.filter(book => book.author === root.name).length
+  },
   Mutation: {
-    addPerson: (
+    addBook: (
+      _: void,
+      args: {
+        title: string;
+        author: string;
+        published: number;
+        genres: string[];
+      }
+    ) => {
+      // if (persons.find(p => p.name === args.name)) {
+      //   throw new UserInputError("Name must be unique", {
+      //     invalidArgs: args.name
+      //   });
+      // }
+      const book = { ...args, id: uuid() };
+      books = books.concat(book);
+      return book;
+    },
+    editAuthor: (
       _: void,
       args: {
         name: string;
-        phone: string;
-        address: {
-          street: string;
-          city: string;
-        };
+        setBornTo: number;
       }
     ) => {
-      if (persons.find(p => p.name === args.name)) {
-        throw new UserInputError("Name must be unique", {
-          invalidArgs: args.name
-        });
+      const author = authors.find(author => author.name === args.name);
+      if (!author) {
+        return null;
       }
-      const person = { ...args, id: uuid() };
-      persons = persons.concat(person);
-      return person;
-    },
-    editNumber: (_: void,, args: Person) => {
-      const person = persons.find(p => p.name === args.name)
-      if (!person) {
-        return null
-      }
-  
-      const updatedPerson = { ...person, phone: args.phone }
-      persons = persons.map(p => p.name === args.name ? updatedPerson : p)
-      return updatedPerson
-    }   
+
+      const updatedAuthor = { ...author, born: args.setBornTo };
+      authors = authors.map(author =>
+        author.name === args.name ? updatedAuthor : author
+      );
+      return updatedAuthor;
+    }
   }
 };
 
