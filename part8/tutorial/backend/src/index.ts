@@ -8,34 +8,29 @@ type Address = {
 type Person = {
   name: string;
   phone?: string;
-  address: Address;
+  street: string;
+  city: string;
   id: string;
 };
 let persons: Person[] = [
   {
     name: "Arto Hellas",
     phone: "040-123543",
-    address: {
-      city: "Espoo",
-      street: "Tapiolankatu 5 A"
-    },
+    city: "Espoo",
+    street: "Tapiolankatu 5 A",
     id: "3d594650-3436-11e9-bc57-8b80ba54c431"
   },
   {
     name: "Matti Luukkainen",
     phone: "040-432342",
-    address: {
-      street: "Malminkaari 10 A",
-      city: "Helsinki"
-    },
+    street: "Malminkaari 10 A",
+    city: "Helsinki",
     id: "3d599470-3436-11e9-bc57-8b80ba54c431"
   },
   {
     name: "Venla Ruuska",
-    address: {
-      street: "Nallemäentie 22 C",
-      city: "Helsinki"
-    },
+    street: "Nallemäentie 22 C",
+    city: "Helsinki",
     id: "3d599471-3436-11e9-bc57-8b80ba54c431"
   }
 ];
@@ -88,9 +83,10 @@ const resolvers = {
   },
   Person: {
     address: (root: { street: string; city: string }) => {
+      const { street, city } = root;
       return {
-        street: root.street,
-        city: root.city
+        street,
+        city
       };
     }
   },
@@ -100,10 +96,8 @@ const resolvers = {
       args: {
         name: string;
         phone: string;
-        address: {
-          street: string;
-          city: string;
-        };
+        street: string;
+        city: string;
       }
     ) => {
       if (persons.find(p => p.name === args.name)) {
@@ -116,14 +110,14 @@ const resolvers = {
       return person;
     },
     editNumber: (_: void, args: Person) => {
-      const person = persons.find(p => p.name === args.name)
+      const person = persons.find(p => p.name === args.name);
       if (!person) {
-        return null
+        return null;
       }
-  
-      const updatedPerson = { ...person, phone: args.phone }
-      persons = persons.map(p => p.name === args.name ? updatedPerson : p)
-      return updatedPerson
+
+      const updatedPerson = { ...person, phone: args.phone };
+      persons = persons.map(p => (p.name === args.name ? updatedPerson : p));
+      return updatedPerson;
     }
   }
 };
