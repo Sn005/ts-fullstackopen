@@ -120,7 +120,7 @@ const typeDefs = gql`
       published: Int!
       genres: [String]!
     ): Book
-    editAuthor(name: String!, setBornTo: Int!): Author
+    editAuthor(name: String!, born: Int!): Author
   }
 `;
 
@@ -156,11 +156,6 @@ const resolvers = {
         genres: string[];
       }
     ) => {
-      // if (persons.find(p => p.name === args.name)) {
-      //   throw new UserInputError("Name must be unique", {
-      //     invalidArgs: args.name
-      //   });
-      // }
       const book = { ...args, id: uuid() };
       books = books.concat(book);
       return book;
@@ -169,7 +164,7 @@ const resolvers = {
       _: void,
       args: {
         name: string;
-        setBornTo: number;
+        born: number;
       }
     ) => {
       const author = authors.find(author => author.name === args.name);
@@ -177,7 +172,7 @@ const resolvers = {
         return null;
       }
 
-      const updatedAuthor = { ...author, born: args.setBornTo };
+      const updatedAuthor = { ...author, born: args.born };
       authors = authors.map(author =>
         author.name === args.name ? updatedAuthor : author
       );
