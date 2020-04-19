@@ -1,39 +1,30 @@
-import { ApolloServer, UserInputError, gql } from "apollo-server";
-import { v1 as uuid } from "uuid";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import {
+  ApolloServer,
+  UserInputError,
+  gql,
+  AuthenticationError,
+} from "apollo-server";
+import jwt from "jsonwebtoken";
+import { Person as PersonType } from "./type/person";
+import { User as UserType } from "./type/user";
+import Person, { PersonModelType } from "./models/person";
+import User from "./models/user";
+dotenv.config();
+mongoose.set("useFindAndModify", false);
+const MONGODB_URI = process.env.MONGODB_URI;
+const JWT_SECRET = "NEED_HERE_A_SECRET_KEY";
+console.log("connecting to", MONGODB_URI);
 
-type Address = {
-  street: string;
-  city: string;
-};
-type Person = {
-  name: string;
-  phone?: string;
-  street: string;
-  city: string;
-  id: string;
-};
-let persons: Person[] = [
-  {
-    name: "Arto Hellas",
-    phone: "040-123543",
-    city: "Espoo",
-    street: "Tapiolankatu 5 A",
-    id: "3d594650-3436-11e9-bc57-8b80ba54c431"
-  },
-  {
-    name: "Matti Luukkainen",
-    phone: "040-432342",
-    street: "Malminkaari 10 A",
-    city: "Helsinki",
-    id: "3d599470-3436-11e9-bc57-8b80ba54c431"
-  },
-  {
-    name: "Venla Ruuska",
-    street: "Nallemäentie 22 C",
-    city: "Helsinki",
-    id: "3d599471-3436-11e9-bc57-8b80ba54c431"
-  }
-];
+mongoose
+  .connect(MONGODB_URI as string, { useNewUrlParser: true })
+  .then(() => {
+    console.log("connected to MongoDB");
+  })
+  .catch((error) => {
+    console.log("error connection to MongoDB:", error.message);
+  });
 
 const typeDefs = gql`
   enum YesNo {
@@ -50,11 +41,19 @@ const typeDefs = gql`
     address: Address!
     id: ID!
   }
-
+  type User {
+    username: String!
+    friends: [Person!]!
+    id: ID!
+  }
+  type Token {
+    value: String!
+  }
   type Query {
     personCount: Int!
     allPersons(phone: YesNo): [Person!]!
     findPerson(name: String!): Person
+    me: User
   }
   type Mutation {
     addPerson(
@@ -64,34 +63,39 @@ const typeDefs = gql`
       city: String!
     ): Person
     editNumber(name: String!, phone: String!): Person
+    createUser(username: String!): User
+    login(username: String!, password: String!): Token
+    addAsFriend(name: String!): User
   }
 `;
 
 const resolvers = {
   Query: {
-    personCount: () => persons.length,
+    personCount: () => Person.collection.countDocuments(),
     allPersons: (_: void, args: { phone: "YES" | "NO" }) => {
       if (!args.phone) {
-        return persons;
+        return Person.find({});
       }
-      const byPhone = (person: Person) =>
-        args.phone === "YES" ? person.phone : !person.phone;
-      return persons.filter(byPhone);
+
+      return Person.find({ phone: { $exists: args.phone === "YES" } });
     },
     findPerson: (_: void, args: { name: string }) =>
-      persons.find(p => p.name === args.name)
+      Person.findOne({ name: args.name }),
+    me: (root: void, args: void, context: { currentUser: string }) => {
+      return context.currentUser;
+    },
   },
   Person: {
     address: (root: { street: string; city: string }) => {
       const { street, city } = root;
       return {
         street,
-        city
+        city,
       };
-    }
+    },
   },
   Mutation: {
-    addPerson: (
+    addPerson: async (
       _: void,
       args: {
         name: string;
@@ -100,31 +104,86 @@ const resolvers = {
         city: string;
       }
     ) => {
-      if (persons.find(p => p.name === args.name)) {
-        throw new UserInputError("Name must be unique", {
-          invalidArgs: args.name
+      const person = new Person({ ...args });
+      try {
+        await person.save();
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
         });
       }
-      const person = { ...args, id: uuid() };
-      persons = persons.concat(person);
       return person;
     },
-    editNumber: (_: void, args: Person) => {
-      const person = persons.find(p => p.name === args.name);
-      if (!person) {
-        return null;
+    editNumber: async (_: void, args: PersonType) => {
+      const person = await Person.findOne({ name: args.name });
+      if (person === null) return;
+      person.phone = args.phone;
+      try {
+        await person.save();
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        });
       }
-
-      const updatedPerson = { ...person, phone: args.phone };
-      persons = persons.map(p => (p.name === args.name ? updatedPerson : p));
-      return updatedPerson;
-    }
-  }
+      return person;
+    },
+    createUser: (_: void, args: UserType) => {
+      const user = new User({ username: args.username });
+      return user.save().catch((error) => {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        });
+      });
+    },
+    login: async (_: void, args: UserType & { password: string }) => {
+      const user = await User.findOne({ username: args.username });
+      if (!user || args.password !== "secred") {
+        throw new UserInputError("wrong credentials");
+      }
+      const userForToken = {
+        username: user.username,
+        id: user._id,
+      };
+      return { value: jwt.sign(userForToken, JWT_SECRET) };
+    },
+    addAsFriend: async (
+      root: void,
+      args: { name: string },
+      {
+        currentUser,
+      }: { currentUser: PersonModelType & { friends: PersonType[] } }
+    ) => {
+      const nonFriendAlready = (person: PersonType) =>
+        !currentUser.friends.map((f) => f._id).includes(person._id);
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated");
+      }
+      const person = await Person.findOne({ name: args.name });
+      if (person === null) return;
+      if (nonFriendAlready(person)) {
+        currentUser.friends = currentUser.friends.concat(person);
+      }
+      await currentUser.save();
+      return currentUser;
+    },
+  },
 };
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
+  context: async ({ req }) => {
+    const auth = req ? req.headers.authorization : null;
+    if (auth && auth.toLowerCase().startsWith("bearer ")) {
+      const decodedToken = jwt.verify(auth.substring(7), JWT_SECRET) as {
+        id: string;
+      };
+      const currentUser = await User.findById(decodedToken.id).populate(
+        "friends"
+      );
+      return { currentUser };
+    }
+  },
 });
 
 server.listen().then(({ url }) => {
