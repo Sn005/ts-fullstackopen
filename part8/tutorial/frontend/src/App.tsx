@@ -23,7 +23,7 @@ type PersonData = {
 const Persons: FC<{ persons: PersonData | undefined }> = ({ persons }) => {
   const [person, setPerson] = useState<PersonType | null>(null);
   const [getPerson, result] = useLazyQuery<PersonData>(FIND_PERSON, {
-    variables: { nameToSearch: "" }
+    variables: { nameToSearch: "" },
   });
   const showPerson = async (name: string) => {
     getPerson({ variables: { nameToSearch: name } });
@@ -52,7 +52,7 @@ const Persons: FC<{ persons: PersonData | undefined }> = ({ persons }) => {
   return (
     <div>
       <h2>Persons</h2>
-      {persons.allPersons.map(p => (
+      {persons.allPersons.map((p) => (
         <div key={p.name}>
           {p.name} {p.phone}
           <button onClick={() => showPerson(p.name)}>show address</button>
@@ -73,17 +73,17 @@ const PersonForm: FC<{
   const [createPerson] = useMutation<PersonType>(CREATE_PERSON, {
     refetchQueries: [
       {
-        query: ALL_PERSONS
-      }
+        query: ALL_PERSONS,
+      },
     ],
-    onError: error => {
+    onError: (error) => {
       setError(error.graphQLErrors[0].message);
-    }
+    },
   });
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     await createPerson({
-      variables: { name, phone, street, city }
+      variables: { name, phone, street, city },
     });
 
     setName("");
@@ -147,7 +147,7 @@ const PhoneForm: FC<{ setError: (e: string) => void }> = ({ setError }) => {
     e.preventDefault();
 
     await editNumber({
-      variables: { name, phone }
+      variables: { name, phone },
     });
 
     setName("");
@@ -187,6 +187,10 @@ const Notify = ({ errorMessage }: { errorMessage: string | null }) => {
 function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { loading, data: persons } = useQuery<PersonData>(ALL_PERSONS);
+  if (persons) {
+    console.log(persons.map((v) => v.name));
+  }
+
   if (loading) {
     return <div>loading...</div>;
   }
