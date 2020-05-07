@@ -1,4 +1,4 @@
-const { UserInputError } = require("apollo-server");
+import { UserInputError } from "apollo-server";
 import { v1 as uuid } from "uuid";
 import { Resolvers, Address, Person } from "./gen-types";
 // import { persons } from "./data";
