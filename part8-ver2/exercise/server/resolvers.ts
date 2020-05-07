@@ -1,6 +1,6 @@
 import { UserInputError } from "apollo-server";
 import { v1 as uuid } from "uuid";
-import { Resolvers } from "./gen-types";
+import { Resolvers, Author, Book } from "./gen-types";
 
 let authors = [
   {
@@ -83,34 +83,56 @@ export const resolvers: Resolvers = {
   Query: {
     bookCount: () => books.length,
     authorCount: () => authors.length,
+    allBooks: (root, args) => {
+      const { author, genre } = args;
+      if (author && genre === undefined)
+        return books.filter((book) => book.author === author);
+      if (genre && author === undefined)
+        return books.filter((book) => book.genres.includes(genre));
+      if (author && genre)
+        return books.filter(
+          (book) => book.author === author && book.genres.includes(genre)
+        );
+      return books;
+    },
+    allAuthors: () => authors,
   },
-  // Person: {
-  //   address: (root: Address) => {
-  //     return {
-  //       street: root.street,
-  //       city: root.city,
-  //     };
-  //   },
-  // },
-  // Mutation: {
-  //   addPerson: (root, args) => {
-  //     if (persons.find((p) => p.name === args.name)) {
-  //       throw new UserInputError("Name must be unique", {
-  //         invalidArgs: args.name,
-  //       });
-  //     }
-  //     const person = { ...args, id: uuid() };
-  //     persons = [...persons, person];
-  //     return person;
-  //   },
-  //   editNumber: (root, args) => {
-  //     const person = persons.find((p) => p.name === args.name);
-  //     if (!person) {
-  //       return null;
-  //     }
-  //     const updatedPerson = { ...person, phone: args.phone };
-  //     persons = persons.map((p) => (p.name === args.name ? updatedPerson : p));
-  //     return updatedPerson;
-  //   },
-  // },
+  Author: {
+    bookCount: (root: Author) =>
+      books.filter((book) => book.author === root.name).length,
+  },
+  Mutation: {
+    addBook: (root, args) => {
+      const isExitAuthor = !!authors.find(
+        (author) => author.name === args.author
+      );
+      if (!isExitAuthor) {
+        authors = [
+          ...authors,
+          { name: args.author, born: undefined, id: uuid() },
+        ];
+      }
+      const newBook = {
+        ...args,
+        id: uuid(),
+      };
+      books = [...books, newBook];
+      return newBook;
+    },
+    editAuthor: (root, args) => {
+      const isExitAuthor = !!authors.find(
+        (author) => author.name === args.name
+      );
+      if (!isExitAuthor) return null;
+      const updatedAuthor = {
+        name: args.name,
+        born: args.setBornTo,
+      };
+      authors = authors.map((author) => {
+        if (author.name !== args.name) return author;
+        return { ...author, ...updatedAuthor };
+      });
+      return updatedAuthor;
+    },
+  },
 };
