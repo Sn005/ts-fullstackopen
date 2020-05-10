@@ -1,54 +1,19 @@
 import { UserInputError } from "apollo-server";
-import { v1 as uuid } from "uuid";
-import { Resolvers, Address, Person } from "./gen-types";
-// import { persons } from "./data";
-// export type Address = {
-//   street: string;
-//   city: string;
-// };
-export type PersonType = {
-  name: string;
-  phone?: string | null;
-  street: string;
-  city: string;
-  id: string;
-};
-
-let persons: PersonType[] = [
-  {
-    name: "Arto Hellas",
-    phone: "040-123543",
-    street: "Tapiolankatu 5 A",
-    city: "Espoo",
-    id: "3d594650-3436-11e9-bc57-8b80ba54c431",
-  },
-  {
-    name: "Matti Luukkainen",
-    phone: "040-432342",
-    street: "Malminkaari 10 A",
-    city: "Helsinki",
-    id: "3d599470-3436-11e9-bc57-8b80ba54c431",
-  },
-  {
-    name: "Venla Ruuska",
-    street: "Nallemäentie 22 C",
-    city: "Helsinki",
-    phone: "040-123543",
-    id: "3d599471-3436-11e9-bc57-8b80ba54c431",
-  },
-];
+import { Resolvers, Address } from "./gen-types";
 export const resolvers: Resolvers = {
   Query: {
-    personCount: () => persons.length,
-    allPersons: (root, args) => {
+    personCount: (root, args, ctx) =>
+      ctx.models.person.collection.countDocuments(),
+    allPersons: async (root, args, ctx) => {
       if (!args.phone) {
-        return persons;
+        return ctx.models.person.find({});
       }
-      const byPhone = (person: PersonType) =>
-        args.phone === "YES" ? person.phone : !person.phone;
-      return persons.filter(byPhone);
+      return ctx.models.person.find({
+        phone: { $exists: args.phone === "YES" },
+      });
     },
-    findPerson: (root, args) => persons.find((p) => p.name === args.name),
+    findPerson: (root, args, ctx) =>
+      ctx.models.person.findOne({ name: args.name }),
   },
   Person: {
     address: (root: Address) => {
@@ -59,25 +24,29 @@ export const resolvers: Resolvers = {
     },
   },
   Mutation: {
-    addPerson: (root, args) => {
-      if (persons.find((p) => p.name === args.name)) {
-        throw new UserInputError("Name must be unique", {
-          invalidArgs: args.name,
+    addPerson: async (root, args, ctx) => {
+      const person = new ctx.models.person({ ...args });
+      try {
+        await person.save();
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
         });
       }
-      const person = { ...args, id: uuid() };
-      persons = [...persons, person];
       return person;
     },
-    editNumber: (root, args) => {
-      const person = persons.find((p) => p.name === args.name);
-      if (!person) {
-        return null;
+    editNumber: async (root, args, ctx) => {
+      const person = await ctx.models.person.findOne({ name: args.name });
+      if (person === null) return;
+      person.phone = args.phone;
+      try {
+        await person.save();
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        });
       }
-
-      const updatedPerson = { ...person, phone: args.phone };
-      persons = persons.map((p) => (p.name === args.name ? updatedPerson : p));
-      return updatedPerson;
+      return person;
     },
   },
 };
