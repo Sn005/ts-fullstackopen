@@ -30,11 +30,24 @@ export type Address = {
   city: Scalars['String'];
 };
 
+export type User = {
+   __typename?: 'User';
+  username: Scalars['String'];
+  friends: Array<Person>;
+  id: Scalars['ID'];
+};
+
+export type Token = {
+   __typename?: 'Token';
+  value: Scalars['String'];
+};
+
 export type Query = {
    __typename?: 'Query';
   personCount: Scalars['Int'];
   allPersons: Array<Person>;
   findPerson?: Maybe<Person>;
+  me?: Maybe<User>;
 };
 
 
@@ -51,6 +64,9 @@ export type Mutation = {
    __typename?: 'Mutation';
   addPerson?: Maybe<Person>;
   editNumber?: Maybe<Person>;
+  createUser?: Maybe<User>;
+  login?: Maybe<Token>;
+  addAsFriend?: Maybe<User>;
 };
 
 
@@ -65,6 +81,22 @@ export type MutationAddPersonArgs = {
 export type MutationEditNumberArgs = {
   name: Scalars['String'];
   phone: Scalars['String'];
+};
+
+
+export type MutationCreateUserArgs = {
+  username: Scalars['String'];
+};
+
+
+export type MutationLoginArgs = {
+  username: Scalars['String'];
+  password: Scalars['String'];
+};
+
+
+export type MutationAddAsFriendArgs = {
+  name: Scalars['String'];
 };
 
 
@@ -146,6 +178,8 @@ export type ResolversTypes = {
   Person: ResolverTypeWrapper<any>,
   ID: ResolverTypeWrapper<any>,
   Address: ResolverTypeWrapper<any>,
+  User: ResolverTypeWrapper<any>,
+  Token: ResolverTypeWrapper<any>,
   Query: ResolverTypeWrapper<{}>,
   Int: ResolverTypeWrapper<any>,
   Mutation: ResolverTypeWrapper<{}>,
@@ -159,6 +193,8 @@ export type ResolversParentTypes = {
   Person: any,
   ID: any,
   Address: any,
+  User: any,
+  Token: any,
   Query: {},
   Int: any,
   Mutation: {},
@@ -178,20 +214,38 @@ export type AddressResolvers<ContextType = Context, ParentType extends Resolvers
   __isTypeOf?: isTypeOfResolverFn<ParentType>,
 };
 
+export type UserResolvers<ContextType = Context, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
+  username?: Resolver<ResolversTypes['String'], ParentType, ContextType>,
+  friends?: Resolver<Array<ResolversTypes['Person']>, ParentType, ContextType>,
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>,
+  __isTypeOf?: isTypeOfResolverFn<ParentType>,
+};
+
+export type TokenResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Token'] = ResolversParentTypes['Token']> = {
+  value?: Resolver<ResolversTypes['String'], ParentType, ContextType>,
+  __isTypeOf?: isTypeOfResolverFn<ParentType>,
+};
+
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   personCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>,
   allPersons?: Resolver<Array<ResolversTypes['Person']>, ParentType, ContextType, RequireFields<QueryAllPersonsArgs, never>>,
   findPerson?: Resolver<Maybe<ResolversTypes['Person']>, ParentType, ContextType, RequireFields<QueryFindPersonArgs, 'name'>>,
+  me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>,
 };
 
 export type MutationResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   addPerson?: Resolver<Maybe<ResolversTypes['Person']>, ParentType, ContextType, RequireFields<MutationAddPersonArgs, 'name' | 'street' | 'city'>>,
   editNumber?: Resolver<Maybe<ResolversTypes['Person']>, ParentType, ContextType, RequireFields<MutationEditNumberArgs, 'name' | 'phone'>>,
+  createUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<MutationCreateUserArgs, 'username'>>,
+  login?: Resolver<Maybe<ResolversTypes['Token']>, ParentType, ContextType, RequireFields<MutationLoginArgs, 'username' | 'password'>>,
+  addAsFriend?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<MutationAddAsFriendArgs, 'name'>>,
 };
 
 export type Resolvers<ContextType = Context> = {
   Person?: PersonResolvers<ContextType>,
   Address?: AddressResolvers<ContextType>,
+  User?: UserResolvers<ContextType>,
+  Token?: TokenResolvers<ContextType>,
   Query?: QueryResolvers<ContextType>,
   Mutation?: MutationResolvers<ContextType>,
 };

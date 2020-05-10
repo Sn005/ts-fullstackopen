@@ -32,11 +32,24 @@ export type Address = {
   city: Scalars['String'];
 };
 
+export type User = {
+   __typename?: 'User';
+  username: Scalars['String'];
+  friends: Array<Person>;
+  id: Scalars['ID'];
+};
+
+export type Token = {
+   __typename?: 'Token';
+  value: Scalars['String'];
+};
+
 export type Query = {
    __typename?: 'Query';
   personCount: Scalars['Int'];
   allPersons: Array<Person>;
   findPerson?: Maybe<Person>;
+  me?: Maybe<User>;
 };
 
 
@@ -53,6 +66,9 @@ export type Mutation = {
    __typename?: 'Mutation';
   addPerson?: Maybe<Person>;
   editNumber?: Maybe<Person>;
+  createUser?: Maybe<User>;
+  login?: Maybe<Token>;
+  addAsFriend?: Maybe<User>;
 };
 
 
@@ -67,6 +83,22 @@ export type MutationAddPersonArgs = {
 export type MutationEditNumberArgs = {
   name: Scalars['String'];
   phone: Scalars['String'];
+};
+
+
+export type MutationCreateUserArgs = {
+  username: Scalars['String'];
+};
+
+
+export type MutationLoginArgs = {
+  username: Scalars['String'];
+  password: Scalars['String'];
+};
+
+
+export type MutationAddAsFriendArgs = {
+  name: Scalars['String'];
 };
 
 export type AllPersonsQueryVariables = {};

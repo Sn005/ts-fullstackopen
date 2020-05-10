@@ -1,13 +1,13 @@
 import mongoose, { Document } from "mongoose";
 
-export type Person = {
+type PersonType = {
   name: string;
   phone?: string;
   street: string;
   city: string;
 };
 
-const personSchema = new mongoose.Schema<Person>({
+const personSchema = new mongoose.Schema<PersonType>({
   name: {
     type: String,
     required: true,
@@ -30,7 +30,6 @@ const personSchema = new mongoose.Schema<Person>({
   },
 });
 
-export type PersonModelType = Person & Document;
-
+export type PersonModelType = PersonType & Document;
 const Person = mongoose.model<PersonModelType>("Person", personSchema);
 export default Person;
