@@ -1,19 +1,29 @@
 import React, { FC, useState, useEffect, useRef } from "react";
-import { useQuery, useLazyQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
 import { ALL_AUTHORS, ALL_BOOKS, ADD_BOOK, EDIT_AUTHOR } from "./query";
-import * as types from "./types";
+import {
+  Author,
+  Book,
+  AddBookMutation,
+  AddBookMutationVariables,
+  EditAuthorMutation,
+  EditAuthorMutationVariables,
+  AllBooksQuery,
+  AllAuthorsQuery,
+} from "./gen-types";
+
+// import * as types from "./types";
 import "./App.css";
 
-const Authors: FC<{ authors: types.AuthorData | undefined }> = ({
-  authors,
-  children
-}) => {
-  if (authors === undefined) return null;
+const Authors: FC<{
+  authors: Pick<Author, "name" | "born" | "bookCount">[] | undefined | null;
+}> = ({ authors, children }) => {
+  if (authors === undefined || authors === null) return null;
   return (
     <div>
       <h2>Authors</h2>
 
-      {authors.allAuthors.map(author => (
+      {authors.map((author) => (
         <div key={author.name}>
           {author.name} {author.born} {author.bookCount}
         </div>
@@ -23,15 +33,17 @@ const Authors: FC<{ authors: types.AuthorData | undefined }> = ({
   );
 };
 
-const Books: FC<{ books: types.BookData | undefined }> = ({ books }) => {
+const Books: FC<{
+  books: Pick<Book, "title" | "author" | "published">[] | undefined;
+}> = ({ books }) => {
   if (books === undefined) return null;
   return (
     <div>
       <h2>Books</h2>
 
-      {books.allBooks.map(books => (
-        <div key={books.title}>
-          {books.title} {books.author} {books.published}
+      {books.map((book) => (
+        <div key={book.title}>
+          {book.title} {book.author} {book.published}
         </div>
       ))}
     </div>
@@ -45,21 +57,26 @@ const BookForm: FC<{
   const [author, setAuthor] = useState("");
   const [published, setPublished] = useState<number | undefined>(undefined);
   const [genres, setGenres] = useState<string[]>([]);
-  const [addBook] = useMutation(ADD_BOOK, {
-    refetchQueries: [
-      {
-        query: ALL_BOOKS
-      }
-    ],
-    onError: error => {
-      setError(error.graphQLErrors[0].message);
+
+  const [addBook] = useMutation<AddBookMutation, AddBookMutationVariables>(
+    ADD_BOOK,
+    {
+      refetchQueries: [
+        {
+          query: ALL_BOOKS,
+        },
+      ],
+      onError: (error) => {
+        setError(error.graphQLErrors[0].message);
+      },
     }
-  });
+  );
   const inputGenreEl = useRef<HTMLInputElement>(null);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (published === undefined) return;
     await addBook({
-      variables: { title, author, published, genres }
+      variables: { title, author, published, genres },
     });
 
     setTitle("");
@@ -113,27 +130,31 @@ const BookForm: FC<{
 
 const AuthorBirthYearForm: FC<{
   setError: (e: string) => void;
-  authors: types.AuthorData | undefined;
+  authors: Pick<Author, "name">[] | undefined;
 }> = ({ setError, authors }) => {
   const [name, setName] = useState("");
-  const [born, setBorn] = useState<number | undefined>(undefined);
-  const [editAuthor] = useMutation(EDIT_AUTHOR, {
+  const [born, setBorn] = useState<number | "">("");
+  const [editAuthor] = useMutation<
+    EditAuthorMutation,
+    EditAuthorMutationVariables
+  >(EDIT_AUTHOR, {
     refetchQueries: [
       {
-        query: ALL_AUTHORS
-      }
+        query: ALL_AUTHORS,
+      },
     ],
-    onError: error => {
+    onError: (error) => {
       setError(error.graphQLErrors[0].message);
-    }
+    },
   });
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (born === "") return;
     await editAuthor({
-      variables: { name, born }
+      variables: { name, born },
     });
     setName("");
-    setBorn(undefined);
+    setBorn("");
   };
   const onChangeAuthor = (e: React.FormEvent<HTMLSelectElement>) => {
     e.preventDefault();
@@ -148,7 +169,7 @@ const AuthorBirthYearForm: FC<{
           author{" "}
           <select value={name} onChange={onChangeAuthor}>
             <option value="">著者を選択してください。</option>
-            {authors.allAuthors.map(author => (
+            {authors.map((author) => (
               <option key={author.name} value={author.name}>
                 {author.name}
               </option>
@@ -179,17 +200,22 @@ function App() {
     }, 10000);
   };
   const CurrentView: FC<{ selectedView: ShowViewsType }> = ({
-    selectedView
+    selectedView,
   }) => {
     switch (selectedView) {
       case "authors":
+        if (!authorsData?.allAuthors) return <></>;
         return (
-          <Authors authors={authors}>
-            <AuthorBirthYearForm setError={notify} authors={authors} />
+          <Authors authors={authorsData.allAuthors}>
+            <AuthorBirthYearForm
+              setError={notify}
+              authors={authorsData.allAuthors}
+            />
           </Authors>
         );
       case "books":
-        return <Books books={books} />;
+        if (!booksData?.allBooks) return <></>;
+        return <Books books={booksData.allBooks} />;
       case "addBook":
         return <BookForm setError={notify} />;
       default: {
@@ -199,11 +225,11 @@ function App() {
       }
     }
   };
-  const { loading: authorsLoading, data: authors } = useQuery<types.AuthorData>(
-    ALL_AUTHORS
-  );
+  const { loading: authorsLoading, data: authorsData } = useQuery<
+    AllAuthorsQuery
+  >(ALL_AUTHORS);
 
-  const { loading: booksLoading, data: books } = useQuery<types.BookData>(
+  const { loading: booksLoading, data: booksData } = useQuery<AllBooksQuery>(
     ALL_BOOKS
   );
   if (authorsLoading || booksLoading) {

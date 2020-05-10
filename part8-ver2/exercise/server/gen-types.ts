@@ -59,7 +59,7 @@ export type MutationAddBookArgs = {
 
 export type MutationEditAuthorArgs = {
   name: Scalars['String'];
-  setBornTo: Scalars['Int'];
+  born: Scalars['Int'];
 };
 
 
@@ -183,7 +183,7 @@ export type QueryResolvers<ContextType = Context, ParentType extends ResolversPa
 
 export type MutationResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   addBook?: Resolver<Maybe<ResolversTypes['Book']>, ParentType, ContextType, RequireFields<MutationAddBookArgs, 'title' | 'author' | 'published' | 'genres'>>,
-  editAuthor?: Resolver<Maybe<ResolversTypes['Author']>, ParentType, ContextType, RequireFields<MutationEditAuthorArgs, 'name' | 'setBornTo'>>,
+  editAuthor?: Resolver<Maybe<ResolversTypes['Author']>, ParentType, ContextType, RequireFields<MutationEditAuthorArgs, 'name' | 'born'>>,
 };
 
 export type Resolvers<ContextType = Context> = {

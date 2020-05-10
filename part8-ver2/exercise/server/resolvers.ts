@@ -120,13 +120,12 @@ export const resolvers: Resolvers = {
       return newBook;
     },
     editAuthor: (root, args) => {
-      const isExitAuthor = !!authors.find(
-        (author) => author.name === args.name
-      );
-      if (!isExitAuthor) return null;
+      const oldAuthor = authors.find((author) => author.name === args.name);
+      if (!oldAuthor) return null;
       const updatedAuthor = {
+        ...oldAuthor,
         name: args.name,
-        born: args.setBornTo,
+        born: args.born,
       };
       authors = authors.map((author) => {
         if (author.name !== args.name) return author;
