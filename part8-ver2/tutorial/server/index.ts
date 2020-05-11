@@ -1,4 +1,3 @@
-import { ClientRequest } from "http";
 import { ApolloServer } from "apollo-server";
 import jwt from "jsonwebtoken";
 import { resolvers } from "./resolvers";
