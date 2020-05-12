@@ -1,86 +1,20 @@
 import React, { FC, useState, useEffect } from "react";
-import { useQuery, useLazyQuery, useMutation } from "@apollo/client";
-import { ALL_PERSONS, FIND_PERSON, CREATE_PERSON, EDIT_NUMBER } from "./query";
+import {
+  useQuery,
+  useLazyQuery,
+  useMutation,
+  useApolloClient,
+} from "@apollo/client";
+import { ALL_PERSONS, FIND_PERSON, EDIT_NUMBER } from "./queries";
 import {
   AllPersonsQuery,
   Person,
   FindPersonByNameQuery,
-  CreatePersonMutation,
-  CreatePersonMutationVariables,
   EditNumberMutation,
   EditNumberMutationVariables,
 } from "./gen-types";
-
-const PersonForm: FC<{
-  setError: (e: string) => void;
-}> = ({ setError }) => {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [street, setStreet] = useState("");
-  const [city, setCity] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [createPerson] = useMutation<
-    CreatePersonMutation,
-    CreatePersonMutationVariables
-  >(CREATE_PERSON, {
-    refetchQueries: [
-      {
-        query: ALL_PERSONS,
-      },
-    ],
-    onError: (error) => {
-      setError(error.graphQLErrors[0].message);
-    },
-  });
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createPerson({
-      variables: { name, phone, street, city },
-    });
-
-    setName("");
-    setPhone("");
-    setStreet("");
-    setCity("");
-  };
-
-  return (
-    <div>
-      {errorMessage && <div style={{ color: "red" }}>{errorMessage}</div>}
-      <form onSubmit={submit}>
-        <div>
-          name{" "}
-          <input
-            value={name}
-            onChange={({ target }) => setName(target.value)}
-          />
-        </div>
-        <div>
-          phone{" "}
-          <input
-            value={phone}
-            onChange={({ target }) => setPhone(target.value)}
-          />
-        </div>
-        <div>
-          street{" "}
-          <input
-            value={street}
-            onChange={({ target }) => setStreet(target.value)}
-          />
-        </div>
-        <div>
-          city{" "}
-          <input
-            value={city}
-            onChange={({ target }) => setCity(target.value)}
-          />
-        </div>
-        <button type="submit">add!</button>
-      </form>
-    </div>
-  );
-};
+import { LoginForm } from "./components/LoginForm";
+import { PersonForm } from "./components/PersonForm";
 
 const Persons: FC<{ persons: Pick<Person, "name" | "phone" | "id">[] }> = ({
   persons,
@@ -183,6 +117,8 @@ const Notify = ({ errorMessage }: { errorMessage: string | null }) => {
 };
 
 const App = () => {
+  const [token, setToken] = useState<string | null>(null);
+  const client = useApolloClient();
   const { loading, data } = useQuery<AllPersonsQuery>(ALL_PERSONS);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   if (loading) {
@@ -197,8 +133,23 @@ const App = () => {
       setErrorMessage(null);
     }, 10000);
   };
+  const logout = () => {
+    setToken(null);
+    localStorage.clear();
+    client.resetStore();
+  };
+  if (!token) {
+    return (
+      <div>
+        <Notify errorMessage={errorMessage} />
+        <h2>Login</h2>
+        <LoginForm setToken={setToken} setError={notify} />
+      </div>
+    );
+  }
   return (
     <div>
+      <button onClick={logout}>logout</button>
       <Notify errorMessage={errorMessage} />
       <Persons persons={data.allPersons} />
       <PersonForm setError={notify} />

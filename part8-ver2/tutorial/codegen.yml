@@ -8,7 +8,7 @@ generates:
       - typescript
       - typescript-resolvers
   ./client/src/gen-types.tsx:
-    documents: ./client/src/query.tsx
+    documents: ./client/src/queries.tsx
     plugins:
       - add: /* eslint-disable */
       - typescript
