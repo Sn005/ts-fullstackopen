@@ -25,9 +25,21 @@ export type Book = {
    __typename?: 'Book';
   title: Scalars['String'];
   published: Scalars['Int'];
-  author: Scalars['String'];
-  genres: Array<Scalars['String']>;
+  author: Author;
+  genres?: Maybe<Array<Scalars['String']>>;
   id: Scalars['ID'];
+};
+
+export type User = {
+   __typename?: 'User';
+  username: Scalars['String'];
+  favoriteGenre: Scalars['String'];
+  id: Scalars['ID'];
+};
+
+export type Token = {
+   __typename?: 'Token';
+  value: Scalars['String'];
 };
 
 export type Query = {
@@ -36,11 +48,12 @@ export type Query = {
   authorCount: Scalars['Int'];
   allBooks?: Maybe<Array<Book>>;
   allAuthors?: Maybe<Array<Author>>;
+  me?: Maybe<User>;
 };
 
 
 export type QueryAllBooksArgs = {
-  author?: Maybe<Scalars['String']>;
+  authorName?: Maybe<Scalars['String']>;
   genre?: Maybe<Scalars['String']>;
 };
 
@@ -48,6 +61,8 @@ export type Mutation = {
    __typename?: 'Mutation';
   addBook?: Maybe<Book>;
   editAuthor?: Maybe<Author>;
+  createUser?: Maybe<User>;
+  login?: Maybe<Token>;
 };
 
 
@@ -64,14 +79,33 @@ export type MutationEditAuthorArgs = {
   born: Scalars['Int'];
 };
 
-export type AllBooksQueryVariables = {};
+
+export type MutationCreateUserArgs = {
+  username: Scalars['String'];
+  favoriteGenre: Scalars['String'];
+};
+
+
+export type MutationLoginArgs = {
+  username: Scalars['String'];
+  password: Scalars['String'];
+};
+
+export type AllBooksQueryVariables = {
+  authorName?: Maybe<Scalars['String']>;
+  genre?: Maybe<Scalars['String']>;
+};
 
 
 export type AllBooksQuery = (
   { __typename?: 'Query' }
   & { allBooks?: Maybe<Array<(
     { __typename?: 'Book' }
-    & Pick<Book, 'title' | 'published' | 'author'>
+    & Pick<Book, 'title' | 'published'>
+    & { author: (
+      { __typename?: 'Author' }
+      & Pick<Author, 'name' | 'id' | 'born' | 'bookCount'>
+    ) }
   )>> }
 );
 
@@ -98,7 +132,11 @@ export type AddBookMutation = (
   { __typename?: 'Mutation' }
   & { addBook?: Maybe<(
     { __typename?: 'Book' }
-    & Pick<Book, 'title' | 'author' | 'published' | 'genres'>
+    & Pick<Book, 'title' | 'published' | 'genres'>
+    & { author: (
+      { __typename?: 'Author' }
+      & Pick<Author, 'name' | 'id' | 'born' | 'bookCount'>
+    ) }
   )> }
 );
 
@@ -118,11 +156,16 @@ export type EditAuthorMutation = (
 
 
 export const AllBooksDocument = gql`
-    query allBooks {
-  allBooks {
+    query allBooks($authorName: String, $genre: String) {
+  allBooks(authorName: $authorName, genre: $genre) {
     title
     published
-    author
+    author {
+      name
+      id
+      born
+      bookCount
+    }
   }
 }
     `;
@@ -139,6 +182,8 @@ export const AllBooksDocument = gql`
  * @example
  * const { data, loading, error } = useAllBooksQuery({
  *   variables: {
+ *      authorName: // value for 'authorName'
+ *      genre: // value for 'genre'
  *   },
  * });
  */
@@ -189,7 +234,12 @@ export const AddBookDocument = gql`
     mutation addBook($title: String!, $author: String!, $published: Int!, $genres: [String!]!) {
   addBook(title: $title, author: $author, published: $published, genres: $genres) {
     title
-    author
+    author {
+      name
+      id
+      born
+      bookCount
+    }
     published
     genres
   }
