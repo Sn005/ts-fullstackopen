@@ -15,6 +15,7 @@ const schema = new mongoose.Schema<BookType>({
     minlength: 5,
   },
   published: Number,
+  genres: Array,
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Author",

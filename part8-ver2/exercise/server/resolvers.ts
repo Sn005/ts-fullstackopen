@@ -79,6 +79,7 @@ export const resolvers: Resolvers = {
           author: exitAuthor ? exitAuthor._id : newAuthor && newAuthor._id,
         });
         await newBook.save();
+        console.log(newBook);
         return newBook;
       } catch (error) {
         throw new UserInputError(error.message, {
@@ -105,7 +106,7 @@ export const resolvers: Resolvers = {
       return author;
     },
     createUser: (root, args, ctx) => {
-      const user = new ctx.models.user({ username: args.username });
+      const user = new ctx.models.user({ ...args });
 
       return user.save().catch((error) => {
         throw new UserInputError(error.message, {
