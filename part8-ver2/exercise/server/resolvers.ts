@@ -1,9 +1,11 @@
-import { UserInputError, AuthenticationError } from "apollo-server";
+import { UserInputError, AuthenticationError, PubSub } from "apollo-server";
 import jwt from "jsonwebtoken";
 import { Resolvers } from "./gen-types";
 import { AuthorModelType } from "./models/authors";
 import { BookModelType } from "./models/books";
 import { JWT_SECRET } from "./config";
+
+const pubsub = new PubSub();
 export const resolvers: Resolvers = {
   Query: {
     bookCount: (root, args, ctx) => ctx.models.book.collection.countDocuments(),
@@ -126,6 +128,11 @@ export const resolvers: Resolvers = {
       };
 
       return { value: jwt.sign(userForToken, JWT_SECRET) };
+    },
+  },
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(["BOOK_ADDED"]),
     },
   },
 };

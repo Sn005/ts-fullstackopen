@@ -89,6 +89,11 @@ export type MutationLoginArgs = {
   password: Scalars['String'];
 };
 
+export type Subscription = {
+   __typename?: 'Subscription';
+  bookAdded: Book;
+};
+
 
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -172,6 +177,7 @@ export type ResolversTypes = {
   Token: ResolverTypeWrapper<any>,
   Query: ResolverTypeWrapper<{}>,
   Mutation: ResolverTypeWrapper<{}>,
+  Subscription: ResolverTypeWrapper<{}>,
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -186,6 +192,7 @@ export type ResolversParentTypes = {
   Token: any,
   Query: {},
   Mutation: {},
+  Subscription: {},
 };
 
 export type AuthorResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Author'] = ResolversParentTypes['Author']> = {
@@ -232,6 +239,10 @@ export type MutationResolvers<ContextType = Context, ParentType extends Resolver
   login?: Resolver<Maybe<ResolversTypes['Token']>, ParentType, ContextType, RequireFields<MutationLoginArgs, 'username' | 'password'>>,
 };
 
+export type SubscriptionResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
+  bookAdded?: SubscriptionResolver<ResolversTypes['Book'], "bookAdded", ParentType, ContextType>,
+};
+
 export type Resolvers<ContextType = Context> = {
   Author?: AuthorResolvers<ContextType>,
   Book?: BookResolvers<ContextType>,
@@ -239,6 +250,7 @@ export type Resolvers<ContextType = Context> = {
   Token?: TokenResolvers<ContextType>,
   Query?: QueryResolvers<ContextType>,
   Mutation?: MutationResolvers<ContextType>,
+  Subscription?: SubscriptionResolvers<ContextType>,
 };
 
 

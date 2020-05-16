@@ -91,6 +91,11 @@ export type MutationLoginArgs = {
   password: Scalars['String'];
 };
 
+export type Subscription = {
+   __typename?: 'Subscription';
+  bookAdded: Book;
+};
+
 export type AllBooksQueryVariables = {
   authorName?: Maybe<Scalars['String']>;
   genre?: Maybe<Scalars['String']>;
