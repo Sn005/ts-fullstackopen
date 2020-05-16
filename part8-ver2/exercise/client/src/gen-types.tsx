@@ -96,6 +96,15 @@ export type Subscription = {
   bookAdded: Book;
 };
 
+export type BookDetailsFragment = (
+  { __typename?: 'Book' }
+  & Pick<Book, 'title' | 'published' | 'genres'>
+  & { author: (
+    { __typename?: 'Author' }
+    & Pick<Author, 'name' | 'id' | 'born' | 'bookCount'>
+  ) }
+);
+
 export type AllBooksQueryVariables = {
   authorName?: Maybe<Scalars['String']>;
   genre?: Maybe<Scalars['String']>;
@@ -106,12 +115,19 @@ export type AllBooksQuery = (
   { __typename?: 'Query' }
   & { allBooks?: Maybe<Array<(
     { __typename?: 'Book' }
-    & Pick<Book, 'title' | 'published' | 'genres'>
-    & { author: (
-      { __typename?: 'Author' }
-      & Pick<Author, 'name' | 'id' | 'born' | 'bookCount'>
-    ) }
+    & BookDetailsFragment
   )>> }
+);
+
+export type BookAddedSubscriptionVariables = {};
+
+
+export type BookAddedSubscription = (
+  { __typename?: 'Subscription' }
+  & { bookAdded: (
+    { __typename?: 'Book' }
+    & BookDetailsFragment
+  ) }
 );
 
 export type AllAuthorsQueryVariables = {};
@@ -137,11 +153,7 @@ export type AddBookMutation = (
   { __typename?: 'Mutation' }
   & { addBook?: Maybe<(
     { __typename?: 'Book' }
-    & Pick<Book, 'title' | 'published' | 'genres'>
-    & { author: (
-      { __typename?: 'Author' }
-      & Pick<Author, 'name' | 'id' | 'born' | 'bookCount'>
-    ) }
+    & BookDetailsFragment
   )> }
 );
 
@@ -173,22 +185,26 @@ export type LoginMutation = (
   )> }
 );
 
-
+export const BookDetailsFragmentDoc = gql`
+    fragment BookDetails on Book {
+  title
+  published
+  author {
+    name
+    id
+    born
+    bookCount
+  }
+  genres
+}
+    `;
 export const AllBooksDocument = gql`
     query allBooks($authorName: String, $genre: String) {
   allBooks(authorName: $authorName, genre: $genre) {
-    title
-    published
-    author {
-      name
-      id
-      born
-      bookCount
-    }
-    genres
+    ...BookDetails
   }
 }
-    `;
+    ${BookDetailsFragmentDoc}`;
 
 /**
  * __useAllBooksQuery__
@@ -216,6 +232,34 @@ export function useAllBooksLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHoo
 export type AllBooksQueryHookResult = ReturnType<typeof useAllBooksQuery>;
 export type AllBooksLazyQueryHookResult = ReturnType<typeof useAllBooksLazyQuery>;
 export type AllBooksQueryResult = ApolloReactCommon.QueryResult<AllBooksQuery, AllBooksQueryVariables>;
+export const BookAddedDocument = gql`
+    subscription bookAdded {
+  bookAdded {
+    ...BookDetails
+  }
+}
+    ${BookDetailsFragmentDoc}`;
+
+/**
+ * __useBookAddedSubscription__
+ *
+ * To run a query within a React component, call `useBookAddedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useBookAddedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBookAddedSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useBookAddedSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<BookAddedSubscription, BookAddedSubscriptionVariables>) {
+        return ApolloReactHooks.useSubscription<BookAddedSubscription, BookAddedSubscriptionVariables>(BookAddedDocument, baseOptions);
+      }
+export type BookAddedSubscriptionHookResult = ReturnType<typeof useBookAddedSubscription>;
+export type BookAddedSubscriptionResult = ApolloReactCommon.SubscriptionResult<BookAddedSubscription>;
 export const AllAuthorsDocument = gql`
     query allAuthors {
   allAuthors {
@@ -253,18 +297,10 @@ export type AllAuthorsQueryResult = ApolloReactCommon.QueryResult<AllAuthorsQuer
 export const AddBookDocument = gql`
     mutation addBook($title: String!, $author: String!, $published: Int!, $genres: [String!]!) {
   addBook(title: $title, author: $author, published: $published, genres: $genres) {
-    title
-    author {
-      name
-      id
-      born
-      bookCount
-    }
-    published
-    genres
+    ...BookDetails
   }
 }
-    `;
+    ${BookDetailsFragmentDoc}`;
 export type AddBookMutationFn = ApolloReactCommon.MutationFunction<AddBookMutation, AddBookMutationVariables>;
 
 /**

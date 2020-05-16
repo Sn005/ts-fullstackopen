@@ -81,7 +81,7 @@ export const resolvers: Resolvers = {
           author: exitAuthor ? exitAuthor._id : newAuthor && newAuthor._id,
         });
         await newBook.save();
-        console.log(newBook);
+        pubsub.publish("BOOK_ADDED", { bookAdded: newBook });
         return newBook;
       } catch (error) {
         throw new UserInputError(error.message, {

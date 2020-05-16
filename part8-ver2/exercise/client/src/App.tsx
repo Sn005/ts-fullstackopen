@@ -1,11 +1,17 @@
 import React, { FC, useState, useEffect } from "react";
-import { useQuery, useApolloClient, useLazyQuery } from "@apollo/client";
-import { ALL_AUTHORS, ALL_BOOKS } from "./queries";
+import {
+  useQuery,
+  useApolloClient,
+  useLazyQuery,
+  useSubscription,
+} from "@apollo/client";
+import { ALL_AUTHORS, ALL_BOOKS, BOOK_ADDED } from "./queries";
 import {
   Author,
   AllBooksQuery,
   AllBooksQueryVariables,
   AllAuthorsQuery,
+  BookAddedSubscription,
 } from "./gen-types";
 import { AuthorBirthYearForm } from "./components/AuthorBirthYearForm";
 import { Authors } from "./components/Authors";
@@ -29,6 +35,14 @@ function App() {
     AllBooksQuery,
     AllBooksQueryVariables
   >(ALL_BOOKS);
+
+  useSubscription<BookAddedSubscription>(BOOK_ADDED, {
+    onSubscriptionData: ({ subscriptionData }) => {
+      if (!subscriptionData.data) return;
+      alert(subscriptionData.data.bookAdded.title);
+    },
+  });
+
   useEffect(() => {
     getBooks();
   }, []);
