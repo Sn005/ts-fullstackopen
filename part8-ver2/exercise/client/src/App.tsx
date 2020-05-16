@@ -7,7 +7,7 @@ import {
 } from "@apollo/client";
 import { ALL_AUTHORS, ALL_BOOKS, BOOK_ADDED } from "./queries";
 import {
-  Author,
+  Book,
   AllBooksQuery,
   AllBooksQueryVariables,
   AllAuthorsQuery,
@@ -22,6 +22,10 @@ import { LoginForm } from "./components/LoginForm";
 import "./App.css";
 
 type ShowViewsType = "authors" | "books" | "addBook" | "login";
+type PickedBookType = Pick<
+  Book,
+  "title" | "author" | "genres" | "published" | "id"
+>;
 function App() {
   const client = useApolloClient();
   const [token, setToken] = useState<string | null>(null);
@@ -36,10 +40,25 @@ function App() {
     AllBooksQueryVariables
   >(ALL_BOOKS);
 
+  // const updateCacheWith = (addedBook: PickedBookType) => {
+  //   const includedIn = (set: PickedBookType[], object: PickedBookType) =>
+  //     set.map((p) => p.id).includes(object.id);
+
+  //   const dataInStore = client.readQuery({ query: ALL_BOOKS });
+  //   if (!dataInStore.allBooks) return;
+  //   if (!includedIn(dataInStore.allBooks, addedBook)) {
+  //     client.writeQuery({
+  //       query: ALL_BOOKS,
+  //       data: { allBooks: dataInStore.allBooks.concat(addedBook) },
+  //     });
+  //   }
+  // };
   useSubscription<BookAddedSubscription>(BOOK_ADDED, {
     onSubscriptionData: ({ subscriptionData }) => {
       if (!subscriptionData.data) return;
-      alert(subscriptionData.data.bookAdded.title);
+      const addedBook = subscriptionData.data.bookAdded;
+      // notify(`${addedBook.name} added`);
+      // updateCacheWith(addedBook);
     },
   });
 
