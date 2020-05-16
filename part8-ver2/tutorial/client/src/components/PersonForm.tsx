@@ -5,10 +5,15 @@ import {
   CreatePersonMutation,
   CreatePersonMutationVariables,
   AllPersonsQuery,
+  Person,
 } from "../gen-types";
+
 export const PersonForm: FC<{
   setError: (e: string) => void;
-}> = ({ setError }) => {
+  updateCacheWith: (
+    addedPerson: Pick<Person, "name" | "phone" | "address" | "id">
+  ) => void;
+}> = ({ setError, updateCacheWith }) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");

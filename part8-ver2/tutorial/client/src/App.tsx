@@ -1,7 +1,7 @@
-import React, { FC, useState, useEffect } from "react";
-import { useQuery, useMutation, useApolloClient } from "@apollo/client";
-import { ALL_PERSONS, EDIT_NUMBER } from "./queries";
-import { AllPersonsQuery } from "./gen-types";
+import React, { useState } from "react";
+import { useQuery, useApolloClient, useSubscription } from "@apollo/client";
+import { ALL_PERSONS, PERSON_ADDED } from "./queries";
+import { AllPersonsQuery, PersonAddedSubscription, Person } from "./gen-types";
 import { LoginForm } from "./components/LoginForm";
 import { PersonForm } from "./components/PersonForm";
 import { Persons } from "./components/Persons";
@@ -14,11 +14,35 @@ const Notify = ({ errorMessage }: { errorMessage: string | null }) => {
   return <div style={{ color: "red" }}>{errorMessage}</div>;
 };
 
+type FormatedPerson = Pick<Person, "name" | "phone" | "address" | "id">;
+
 const App = () => {
   const [token, setToken] = useState<string | null>(null);
   const client = useApolloClient();
   const { loading, data } = useQuery<AllPersonsQuery>(ALL_PERSONS);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const updateCacheWith = (addedPerson: FormatedPerson) => {
+    const includedIn = (set: FormatedPerson[], object: FormatedPerson) =>
+      set.map((p) => p.id).includes(object.id);
+
+    const dataInStore = client.readQuery({ query: ALL_PERSONS });
+    if (!includedIn(dataInStore.allPersons, addedPerson)) {
+      client.writeQuery({
+        query: ALL_PERSONS,
+        data: { allPersons: dataInStore.allPersons.concat(addedPerson) },
+      });
+    }
+  };
+
+  useSubscription<PersonAddedSubscription>(PERSON_ADDED, {
+    onSubscriptionData: ({ subscriptionData }) => {
+      if (!subscriptionData.data) return;
+      const addedPerson = subscriptionData.data.personAdded;
+      notify(`${addedPerson.name} added`);
+      updateCacheWith(addedPerson);
+    },
+  });
   if (loading) {
     return <div>loading...</div>;
   }
@@ -50,7 +74,7 @@ const App = () => {
       <button onClick={logout}>logout</button>
       <Notify errorMessage={errorMessage} />
       <Persons persons={data.allPersons} />
-      <PersonForm setError={notify} />
+      <PersonForm updateCacheWith={updateCacheWith} setError={notify} />
       <PhoneForm setError={notify} />
     </div>
   );

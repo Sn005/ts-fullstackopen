@@ -41,6 +41,8 @@
   },
   "devDependencies": {
     "@apollo/client": "^3.0.0-beta.41",
-    "@apollo/link-context": "^2.0.0-beta.3"
+    "@apollo/link-context": "^2.0.0-beta.3",
+    "@apollo/link-ws": "^2.0.0-beta.3",
+    "subscriptions-transport-ws": "^0.9.16"
   }
 }

@@ -101,6 +101,20 @@ export type MutationAddAsFriendArgs = {
   name: Scalars['String'];
 };
 
+export type Subscription = {
+   __typename?: 'Subscription';
+  personAdded: Person;
+};
+
+export type PersonDetailsFragment = (
+  { __typename?: 'Person' }
+  & Pick<Person, 'id' | 'name' | 'phone'>
+  & { address: (
+    { __typename?: 'Address' }
+    & Pick<Address, 'street' | 'city'>
+  ) }
+);
+
 export type AllPersonsQueryVariables = {};
 
 
@@ -108,8 +122,19 @@ export type AllPersonsQuery = (
   { __typename?: 'Query' }
   & { allPersons: Array<(
     { __typename?: 'Person' }
-    & Pick<Person, 'name' | 'phone' | 'id'>
+    & PersonDetailsFragment
   )> }
+);
+
+export type PersonAddedSubscriptionVariables = {};
+
+
+export type PersonAddedSubscription = (
+  { __typename?: 'Subscription' }
+  & { personAdded: (
+    { __typename?: 'Person' }
+    & PersonDetailsFragment
+  ) }
 );
 
 export type FindPersonByNameQueryVariables = {
@@ -181,16 +206,24 @@ export type LoginMutation = (
   )> }
 );
 
-
-export const AllPersonsDocument = gql`
-    query allPersons {
-  allPersons {
-    name
-    phone
-    id
+export const PersonDetailsFragmentDoc = gql`
+    fragment PersonDetails on Person {
+  id
+  name
+  phone
+  address {
+    street
+    city
   }
 }
     `;
+export const AllPersonsDocument = gql`
+    query allPersons {
+  allPersons {
+    ...PersonDetails
+  }
+}
+    ${PersonDetailsFragmentDoc}`;
 
 /**
  * __useAllPersonsQuery__
@@ -216,6 +249,34 @@ export function useAllPersonsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryH
 export type AllPersonsQueryHookResult = ReturnType<typeof useAllPersonsQuery>;
 export type AllPersonsLazyQueryHookResult = ReturnType<typeof useAllPersonsLazyQuery>;
 export type AllPersonsQueryResult = ApolloReactCommon.QueryResult<AllPersonsQuery, AllPersonsQueryVariables>;
+export const PersonAddedDocument = gql`
+    subscription personAdded {
+  personAdded {
+    ...PersonDetails
+  }
+}
+    ${PersonDetailsFragmentDoc}`;
+
+/**
+ * __usePersonAddedSubscription__
+ *
+ * To run a query within a React component, call `usePersonAddedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `usePersonAddedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePersonAddedSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function usePersonAddedSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<PersonAddedSubscription, PersonAddedSubscriptionVariables>) {
+        return ApolloReactHooks.useSubscription<PersonAddedSubscription, PersonAddedSubscriptionVariables>(PersonAddedDocument, baseOptions);
+      }
+export type PersonAddedSubscriptionHookResult = ReturnType<typeof usePersonAddedSubscription>;
+export type PersonAddedSubscriptionResult = ApolloReactCommon.SubscriptionResult<PersonAddedSubscription>;
 export const FindPersonByNameDocument = gql`
     query findPersonByName($nameToSearch: String!) {
   findPerson(name: $nameToSearch) {

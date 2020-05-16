@@ -1,8 +1,10 @@
-import { UserInputError, AuthenticationError } from "apollo-server";
+import { UserInputError, AuthenticationError, PubSub } from "apollo-server";
 import jwt from "jsonwebtoken";
 import { Resolvers, Address, Person } from "./gen-types";
 import { JWT_SECRET } from "./config";
 import { PersonModelType } from "./models/person";
+
+const pubsub = new PubSub();
 export const resolvers: Resolvers = {
   Query: {
     personCount: (root, args, ctx) =>
@@ -42,6 +44,8 @@ export const resolvers: Resolvers = {
           invalidArgs: args,
         });
       }
+      pubsub.publish("PERSON_ADDED", { personAdded: person });
+
       return person;
     },
     editNumber: async (root, args, ctx) => {
@@ -98,6 +102,11 @@ export const resolvers: Resolvers = {
       await currentUser.save();
 
       return currentUser;
+    },
+  },
+  Subscription: {
+    personAdded: {
+      subscribe: () => pubsub.asyncIterator(["PERSON_ADDED"]),
     },
   },
 };
